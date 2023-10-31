@@ -1,0 +1,8 @@
+github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d h1:xDfNPAt8lFiC1UJrqV3uuy861HCTo708pDMbjHHdCas=
+github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d/go.mod h1:6QX/PXZ00z/TKoufEY6K/a0k6AhaJrQKdFe6OfVXsa4=
+github.com/elazarl/goproxy v0.0.0-20231017160920-1fe6677f404d h1:ikfPAvbWWkCagwNfwfWsIaRyKHDF1I6T4lh7PewKV9A=
+github.com/elazarl/goproxy v0.0.0-20231017160920-1fe6677f404d/go.mod h1:Ro8st/ElPeALwNFlcTpWmkr6IoMFfkjXAvTHpevnDsM=
+github.com/elazarl/goproxy/ext v0.0.0-20190711103511-473e67f1d7d2/go.mod h1:gNh8nYJoAm43RfaxurUnxr+N1PwuFV3ZMl/efxlIlY8=
+github.com/rogpeppe/go-charset v0.0.0-20180617210344-2471d30d28b4/go.mod h1:qgYeAmZ5ZIpBWTGllZSQnw97Dj+woV0toclVaRGI8pc=
+gopkg.in/elazarl/goproxy.v1 v1.0.0-20180725130230-947c36da3153 h1:i2sumy6EgvN2dbX7HPhoDc7hLyoym3OYdU5HlvUUrpE=
+gopkg.in/elazarl/goproxy.v1 v1.0.0-20180725130230-947c36da3153/go.mod h1:xzjpkyedLMz3EXUTBbkRuuGPsxfsBX3Sy7J6kC9Gvoc=
