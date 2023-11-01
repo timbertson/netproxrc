@@ -46,7 +46,13 @@ func main() {
 
 	cmd := flag.Args()
 
-	log.Printf("Loading %s", netrcPath)
+	info := func(msg string, argv ...interface{}) {
+		if verbose {
+			log.Printf("INFO: "+msg, argv...)
+		}
+	}
+
+	info("Loading %s", netrcPath)
 	netrcFile, err := netrc.ParseFile(netrcPath)
 
 	proxy := goproxy.NewProxyHttpServer()
@@ -61,10 +67,10 @@ func main() {
 		hostname := strings.Split(host, ":")[0] // remove port
 		// only MITM if it's an authenticated host, to minimuise intrusion
 		if netrcFile.FindMachine(hostname) != nil {
-			log.Printf("MitmConnect: %s", hostname)
+			info("MitmConnect: %s", hostname)
 			return goproxy.MitmConnect, host
 		} else {
-			log.Printf("OkConnect: %s", hostname)
+			info("OkConnect: %s", hostname)
 			return goproxy.OkConnect, host
 		}
 	}
@@ -79,7 +85,7 @@ func main() {
 
 			machine := netrcFile.FindMachine(r.Host)
 			if machine != nil {
-				log.Printf("Injecting auth for %s", r.Host)
+				info("Injecting auth for %s", r.Host)
 				loginStr := fmt.Sprintf("%s:%s", machine.Login, machine.Password)
 				loginB64 := base64.StdEncoding.EncodeToString([]byte(loginStr))
 				r.Header.Add("authorization", fmt.Sprintf("Basic %s", loginB64))
@@ -118,7 +124,7 @@ func main() {
 
 	systemCertPath := os.Getenv("CURL_CA_BUNDLE")
 	if systemCertPath != "" {
-		log.Printf("merging certificates with system bundle: %s", systemCertPath)
+		info("merging certificates with system bundle: %s", systemCertPath)
 		systemCerts, err := os.ReadFile(systemCertPath)
 		if err != nil {
 			log.Panic(err)
@@ -131,7 +137,7 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
-	log.Printf("Wrote CA cert to %s", certPath)
+	info("Wrote CA cert to %s", certPath)
 
 	// run command in foreground (or wait for TERM)
 	if len(cmd) == 0 {
@@ -142,14 +148,20 @@ func main() {
 		args := cmd[1:]
 
 		http_proxy := fmt.Sprintf("http://localhost:%d", port)
-		log.Printf("Running with http_proxy=%s\n  + %v", http_proxy, cmd)
 		proc := exec.Command(exe, args...)
-		proc.Env = append(proc.Env, fmt.Sprintf("http_proxy=%s", http_proxy))
-		proc.Env = append(proc.Env, fmt.Sprintf("https_proxy=%s", http_proxy))
+
+		for _, key := range []string{"https_proxy"} {
+			envvar := fmt.Sprintf("%s=%s", key, http_proxy)
+			proc.Env = append(proc.Env, envvar)
+			info("+ export %s", envvar)
+		}
 
 		for _, key := range []string{"CURL_CA_BUNDLE", "SSL_CERT_FILE", "GIT_SSL_CAINFO"} {
-			proc.Env = append(proc.Env, fmt.Sprintf("%s=%s", key, certPath))
+			envvar := fmt.Sprintf("%s=%s", key, certPath)
+			proc.Env = append(proc.Env, envvar)
+			info("+ export %s", envvar)
 		}
+		info(" + %v", cmd)
 
 		proc.Stdin = os.Stdin
 		proc.Stdout = os.Stdout
