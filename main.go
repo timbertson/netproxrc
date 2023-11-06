@@ -54,6 +54,9 @@ func main() {
 
 	info("Loading %s", netrcPath)
 	netrcFile, err := netrc.ParseFile(netrcPath)
+	if err != nil {
+		log.Panic(err)
+	}
 
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = verbose
@@ -139,28 +142,36 @@ func main() {
 	}
 	info("Wrote CA cert to %s", certPath)
 
-	// run command in foreground (or wait for TERM)
-	if len(cmd) == 0 {
-		log.Print("Press ctrl+c to terminate")
-		select {}
-	} else {
-		exe := cmd[0]
-		args := cmd[1:]
-
+	assignEnv := func(env []string) {
 		http_proxy := fmt.Sprintf("http://localhost:%d", port)
-		proc := exec.Command(exe, args...)
 
 		for _, key := range []string{"https_proxy"} {
 			envvar := fmt.Sprintf("%s=%s", key, http_proxy)
-			proc.Env = append(proc.Env, envvar)
+			env = append(env, envvar)
 			info("+ export %s", envvar)
 		}
 
 		for _, key := range []string{"CURL_CA_BUNDLE", "SSL_CERT_FILE", "GIT_SSL_CAINFO"} {
 			envvar := fmt.Sprintf("%s=%s", key, certPath)
-			proc.Env = append(proc.Env, envvar)
+			env = append(env, envvar)
 			info("+ export %s", envvar)
 		}
+	}
+
+	// run command in foreground (or wait for TERM)
+	if len(cmd) == 0 {
+		buf := []string{}
+		assignEnv(buf)
+
+		log.Print("Press ctrl+c to terminate")
+		select {}
+	} else {
+		exe := cmd[0]
+		args := cmd[1:]
+		proc := exec.Command(exe, args...)
+		proc.Env = os.Environ()
+		assignEnv(proc.Env)
+
 		info(" + %v", cmd)
 
 		proc.Stdin = os.Stdin
