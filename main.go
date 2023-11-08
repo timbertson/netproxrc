@@ -142,35 +142,45 @@ func main() {
 	}
 	info("Wrote CA cert to %s", certPath)
 
-	assignEnv := func(env []string) {
+	additionalEnv := (func() []string {
+		newEnv := []string{}
+
 		http_proxy := fmt.Sprintf("http://localhost:%d", port)
 
 		for _, key := range []string{"https_proxy"} {
-			envvar := fmt.Sprintf("%s=%s", key, http_proxy)
-			env = append(env, envvar)
-			info("+ export %s", envvar)
+			newEnv = append(newEnv, fmt.Sprintf("%s=%s", key, http_proxy))
 		}
 
 		for _, key := range []string{"CURL_CA_BUNDLE", "SSL_CERT_FILE", "GIT_SSL_CAINFO"} {
-			envvar := fmt.Sprintf("%s=%s", key, certPath)
-			env = append(env, envvar)
-			info("+ export %s", envvar)
+			newEnv = append(newEnv, fmt.Sprintf("%s=%s", key, certPath))
 		}
-	}
+
+		// set env vars in nix impure-env as well
+		nixConfigStr := os.Getenv("NIX_CONFIG")
+		var nixConfig []string
+		if nixConfigStr == "" {
+			nixConfig = []string{}
+		} else {
+			nixConfig = strings.Split("\n", nixConfigStr)
+		}
+		nixConfig = append(nixConfig, fmt.Sprintf("impure-env = %s", strings.Join(newEnv, " ")))
+		newEnv = append(newEnv, fmt.Sprintf("NIX_CONFIG=%s", strings.Join(nixConfig, "\n")))
+
+		for _, envvar := range newEnv {
+			info("+ export %s", strings.ReplaceAll(envvar, "\n", "\\\n  "))
+		}
+		return newEnv
+	})()
 
 	// run command in foreground (or wait for TERM)
 	if len(cmd) == 0 {
-		buf := []string{}
-		assignEnv(buf)
-
 		log.Print("Press ctrl+c to terminate")
 		select {}
 	} else {
 		exe := cmd[0]
 		args := cmd[1:]
 		proc := exec.Command(exe, args...)
-		proc.Env = os.Environ()
-		assignEnv(proc.Env)
+		proc.Env = append(os.Environ(), additionalEnv...)
 
 		info(" + %v", cmd)
 
