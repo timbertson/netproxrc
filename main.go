@@ -135,8 +135,10 @@ func main() {
 		cacerts = fmt.Sprintf("%s\n\n%s\n", systemCerts, cacerts)
 	}
 
-	certPath := filepath.Join(usr.HomeDir, ".cache", "netproxrc-cert.pem")
-	err = os.WriteFile(certPath, []byte(cacerts), 0600)
+	// CA bundle should be world-readable since builders may run as a different user
+	// NOTE: do not use os.TempDir() on MacOS, it plays shenanigans to make that unreadable to other users
+	certPath := "/tmp/netproxrc-cert.pem"
+	err = os.WriteFile(certPath, []byte(cacerts), 0622)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -151,7 +153,14 @@ func main() {
 			newEnv = append(newEnv, fmt.Sprintf("%s=%s", key, http_proxy))
 		}
 
-		for _, key := range []string{"CURL_CA_BUNDLE", "SSL_CERT_FILE", "GIT_SSL_CAINFO"} {
+		for _, key := range []string{
+			"NIX_SSL_CERT_FILE",       // nix aware wrappers
+			"CURL_CA_BUNDLE",          // curl
+			"GIT_SSL_CAINFO",          // git
+			"NIX_GIT_SSL_CAINFO",      // nix-aware git
+			"SSL_CERT_FILE",           // openssl
+			"SYSTEM_CERTIFICATE_PATH", // haskell x509
+		} {
 			newEnv = append(newEnv, fmt.Sprintf("%s=%s", key, certPath))
 		}
 
