@@ -52,7 +52,7 @@ Nix adds another layer to understand. Nix's `cacert` package exports `NIX_SSL_CE
 
 Nix-packaged tools are supposed to read from this envvar instead of the default paths they would be configured with on a typical linux distro (typically somewhere in `/etc/`). Here's the [relevant patch for openssl](https://github.com/NixOS/nixpkgs/blob/f3565a2c088883636f198550eac349ed82c6a2b3/pkgs/development/libraries/openssl/3.0/nix-ssl-cert-file.patch)
 
-But it _also_ exports `SSL_CERT_FILE` and `SYSTEM_CERTIFICATE_PATH`, for comatibility with tools that haven't been (or can't be?) wrapped in this way.
+But it _also_ exports `SSL_CERT_FILE` and `SYSTEM_CERTIFICATE_PATH`, for compatibility with tools that haven't been (or can't be?) wrapped in this way.
 
 So we know how tools are configured, and we know that nix-packaged tools are supposed to use a nix-specific default which is provided by the `cacerts` package, instead of using the host system's certificates.
 
@@ -70,4 +70,4 @@ So all in all, to get `fetchgit` to use custom certificates just by setting an e
 
 In order for that variable to actually get copied into the derivation's otherwise clean environment, you need to add `NIX_GIT_SSL_CAINFO` to the list of `impureEnvVars` in the derivation. The fetchgit derivation does this already.
 
-In order to support git go modules, I ended up making [a similar modification]() to gi's module fetching code.
+In order to support git go modules, I ended up making [a similar modification](https://github.com/NixOS/nixpkgs/pull/266643) to go's module fetching code.
