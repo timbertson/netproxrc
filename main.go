@@ -138,11 +138,16 @@ func main() {
 	// CA bundle should be world-readable since builders may run as a different user
 	// NOTE: do not use os.TempDir() on MacOS, it plays shenanigans to make that unreadable to other users
 	certPath := "/tmp/netproxrc-cert.pem"
-	err = os.WriteFile(certPath, []byte(cacerts), 0622)
+	err = os.WriteFile(certPath, []byte(cacerts), 0644)
 	if err != nil {
 		log.Panic(err)
 	}
 	info("Wrote CA cert to %s", certPath)
+
+	err = os.Chmod(certPath, 0644)
+	if err != nil {
+		log.Panic(err)
+	}
 
 	additionalEnv := (func() []string {
 		newEnv := []string{}
