@@ -48,11 +48,11 @@ Which was enough in the days of http, but a https proxy like this one also needs
 
 Different software all supports the same format for this file, which is nice. But they differ in which environment variable they use to specify that file. Git uses `GIT_SSL_CAINFO`, openssl uses `SSL_CERT_FILE`, curl uses `CURL_CA_BUNDLE`, and there's likely more.
 
-Nix adds another layer to understand. Nix's `cacert` package exports `NIX_SSL_CERT_FILE` as the canonical environment variable where nix-wrapped tools ought to read from.
+Nix adds another layer to understand. Nix's `cacert` package [exports `NIX_SSL_CERT_FILE`](https://github.com/NixOS/nixpkgs/blob/3a0030bfafd5c961cc148944450eefcbd1d3eeb2/pkgs/data/misc/cacert/setup-hook.sh#L1) as the canonical environment variable where nix-wrapped tools ought to read from.
 
 Nix-packaged tools are supposed to read from this envvar instead of the default paths they would be configured with on a typical linux distro (typically somewhere in `/etc/`). Here's the [relevant patch for openssl](https://github.com/NixOS/nixpkgs/blob/f3565a2c088883636f198550eac349ed82c6a2b3/pkgs/development/libraries/openssl/3.0/nix-ssl-cert-file.patch)
 
-But it _also_ exports `SSL_CERT_FILE` and `SYSTEM_CERTIFICATE_PATH`, for compatibility with tools that haven't been (or can't be?) wrapped in this way.
+But `cacert` _also_ exports `SSL_CERT_FILE` and `SYSTEM_CERTIFICATE_PATH`, for compatibility with tools that haven't been (or can't be?) wrapped in this way.
 
 So we know how tools are configured, and we know that nix-packaged tools are supposed to use a nix-specific default which is provided by the `cacerts` package, instead of using the host system's certificates.
 
