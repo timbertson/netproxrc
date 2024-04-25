@@ -25,19 +25,16 @@ I built this proxy in order to have nix builds use authenticated sources (privat
 
 It works out of the box for single-user installations, but in multi-user installations via `nix-daemon` it's trickier. To make this work, it adds `impure-env` to the `$NIX_CONFIG` environment variable. For this to work, you'll need two things:
 
- - your nix-daemon needs to include [PR#8830](https://github.com/NixOS/nix/pull/8830) (commit 94e91566ed7f1df778468862204e7495a3f0f001), which was merged to `master` on 2023-10-11 and should appear in the next release of nix.
+ - your nix-daemon needs to use nix v2.19.0 or greater
  - you need to add `experimental-features = configurable-impure-env` to your `/etc/nix/nix.conf` (and restart the daemon after adding this)
 
-If you build this manually, you can install it into your system profile (as root):
+To update the nix version used in the daemon, you can do this (as root):
 
 ```
-root# nix-env --install ~tim/dev/nix/nix/result
-replacing old 'nix-2.18.0'
-installing 'nix-2.19.0pre20231011_94e9156'
-building '/nix/store/rbh629s7jmkvm63m2dhh6mgv51dk5cah-user-environment.drv'...
-
+root# nix-channel --update
+root# nix-env --upgrade
 root# nix --version
-nix (Nix) 2.19.0pre20231011_94e9156
+nix (Nix) 2.21.2
 ```
 
 # The gnarly details of nix proxying
