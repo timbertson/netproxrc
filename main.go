@@ -11,7 +11,7 @@ import (
 
 func main() {
 	var port int
-	flag.IntVar(&port, "port", 8080, "port")
+	flag.IntVar(&port, "port", 0, "port (0 will use a random port)")
 
 	var verbose bool
 	flag.BoolVar(&verbose, "verbose", false, "set verbose")

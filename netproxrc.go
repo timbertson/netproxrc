@@ -25,7 +25,20 @@ type Config struct {
 }
 
 func Run(config Config) (bool, error) {
-	port := config.port
+	return WithProc(config, func(proc *exec.Cmd) (bool, error) {
+		err := proc.Start()
+		if err != nil {
+			return false, err
+		}
+		err = proc.Wait()
+		if err != nil {
+			return false, nil // don't report this error, just exit
+		}
+		return true, nil
+	})
+}
+
+func WithProc(config Config, block func(*exec.Cmd) (bool, error)) (bool, error) {
 	verbose := config.verbose
 	listenIface := config.listenIface
 	netrcPath := config.netrcPath
@@ -80,8 +93,7 @@ func Run(config Config) (bool, error) {
 			}
 			return r, nil
 		})
-	addr := fmt.Sprintf("%s:%d", listenIface, port)
-	log.Printf("Listening on: %s", addr)
+	addr := fmt.Sprintf("%s:%d", listenIface, config.port)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -95,11 +107,12 @@ func Run(config Config) (bool, error) {
 		},
 	}
 
-	// TODO listen on a random port
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatal(err)
 	}
+	listenAddr := listener.Addr().String()
+	log.Printf("Listening on: %s", listenAddr)
 
 	// TCP port is listening, spawn server in background
 	go func() {
@@ -137,7 +150,7 @@ func Run(config Config) (bool, error) {
 	additionalEnv := (func() []string {
 		newEnv := []string{}
 
-		http_proxy := fmt.Sprintf("http://localhost:%d", port)
+		http_proxy := fmt.Sprintf("http://%s", listenAddr)
 
 		for _, key := range []string{"https_proxy"} {
 			newEnv = append(newEnv, fmt.Sprintf("%s=%s", key, http_proxy))
@@ -186,14 +199,7 @@ func Run(config Config) (bool, error) {
 		proc.Stdin = os.Stdin
 		proc.Stdout = os.Stdout
 		proc.Stderr = os.Stderr
-		err := proc.Start()
-		if err != nil {
-			return false, err
-		}
-		err = proc.Wait()
-		if err != nil {
-			return false, nil // don't report this error, just exit
-		}
+		return block(proc)
 	}
 	return true, nil
 }
