@@ -4,9 +4,6 @@ import (
 	"flag"
 	"log"
 	"os"
-	"os/user"
-	"path/filepath"
-	"strings"
 )
 
 func main() {
@@ -24,23 +21,22 @@ func main() {
 
 	flag.Parse()
 
-	if strings.HasPrefix(netrcPath, "~/") {
-		usr, err := user.Current()
-		if err != nil {
-			log.Panic(err)
-		}
-		dir := usr.HomeDir
-		netrcPath = filepath.Join(dir, netrcPath[2:])
-	}
-
 	cmd := flag.Args()
 	
+	info := func(msg string, argv ...interface{}) {
+		if verbose {
+			log.Printf("INFO: "+msg, argv...)
+		}
+	}
+
 	success, err := Run(Config{
 		port: port,
 		verbose: verbose,
 		listenIface: listenIface,
 		netrcPath: netrcPath,
 		cmd: cmd,
+		info: info,
+		suppressPrintf: false,
 	})
 	if err != nil {
 		log.Panic(err)

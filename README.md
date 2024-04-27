@@ -68,3 +68,11 @@ So all in all, to get `fetchgit` to use custom certificates just by setting an e
 In order for that variable to actually get copied into the derivation's otherwise clean environment, you need to add `NIX_GIT_SSL_CAINFO` to the list of `impureEnvVars` in the derivation. The fetchgit derivation does this already.
 
 In order to support git go modules, I ended up making [a similar modification](https://github.com/NixOS/nixpkgs/pull/266643) to go's module fetching code.
+
+# nixpkgs overlays
+
+See [./nix/overlays.nix]() for the overlays that are currently required on top of upstream nixpkgs (they won't be required for all use cases, but take a look if things aren't working).
+
+# Running the tests
+
+NOTE: git tests rely on a ~/.netrc with real github credentials. To access the test private repository, raise an issue in the netproxrc github repo asking for access to the private repository and I'll add you.

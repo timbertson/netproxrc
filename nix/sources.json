@@ -1,0 +1,14 @@
+{
+    "fetlock": {
+        "branch": "master",
+        "description": "Convert any lockfile to a nix expression",
+        "homepage": "",
+        "owner": "timbertson",
+        "repo": "fetlock",
+        "rev": "edf7cb3e61e959c8ae4cf8a9b1216671d2b738f8",
+        "sha256": "0xsc6v223rirqd6j5ia9kdsa6q5wg3dlg690ym2qiir4r3sqr87g",
+        "type": "tarball",
+        "url": "https://github.com/timbertson/fetlock/archive/edf7cb3e61e959c8ae4cf8a9b1216671d2b738f8.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    }
+}

@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/user"
+	"path/filepath"
 	"strings"
 
 	"github.com/bgentry/go-netrc/netrc"
@@ -22,6 +24,8 @@ type Config struct {
 	listenIface string
 	netrcPath string
 	cmd []string
+	info func(msg string, argv ...interface{})
+	suppressPrintf bool
 }
 
 func Run(config Config) (bool, error) {
@@ -38,16 +42,28 @@ func Run(config Config) (bool, error) {
 	})
 }
 
+type ProxyLog struct {
+	config Config
+}
+
+func (log ProxyLog) Printf(format string, v ...interface{}) {
+	log.config.info(format, v...)
+}
+
 func WithProc(config Config, block func(*exec.Cmd) (bool, error)) (bool, error) {
 	verbose := config.verbose
 	listenIface := config.listenIface
 	netrcPath := config.netrcPath
 	cmd := config.cmd
+	info := config.info
 
-	info := func(msg string, argv ...interface{}) {
-		if verbose {
-			log.Printf("INFO: "+msg, argv...)
+	if strings.HasPrefix(netrcPath, "~/") {
+		usr, err := user.Current()
+		if err != nil {
+			log.Panic(err)
 		}
+		dir := usr.HomeDir
+		netrcPath = filepath.Join(dir, netrcPath[2:])
 	}
 
 	info("Loading %s", netrcPath)
@@ -63,6 +79,7 @@ func WithProc(config Config, block func(*exec.Cmd) (bool, error)) (bool, error) 
 	tlsConfig := proxy.Tr.TLSClientConfig.Clone()
 	tlsConfig.InsecureSkipVerify = false
 	proxy.Tr.TLSClientConfig = tlsConfig
+	proxy.Logger = ProxyLog{config}
 
 	var mitmAuthHosts goproxy.FuncHttpsHandler = func(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
 		hostname := strings.Split(host, ":")[0] // remove port
@@ -112,7 +129,9 @@ func WithProc(config Config, block func(*exec.Cmd) (bool, error)) (bool, error) 
 		log.Fatal(err)
 	}
 	listenAddr := listener.Addr().String()
-	log.Printf("Listening on: %s", listenAddr)
+	if !config.suppressPrintf {
+		log.Printf("Listening on: %s", listenAddr)
+	}
 
 	// TCP port is listening, spawn server in background
 	go func() {
@@ -184,7 +203,7 @@ func WithProc(config Config, block func(*exec.Cmd) (bool, error)) (bool, error) 
 		return newEnv
 	})()
 
-	// run command in foreground (or wait for TERM)
+	// execute block with command (or wait for TERM if none given)
 	if len(cmd) == 0 {
 		log.Print("Press ctrl+c to terminate")
 		select {}

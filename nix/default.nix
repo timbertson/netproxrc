@@ -1,6 +1,7 @@
 { pkgs ? import <nixpkgs> {} }:
 with pkgs;
 let
-  fetlock = callPackage (builtins.fetchTarball "https://github.com/timbertson/fetlock/archive/master.tar.gz") {};
+  sources = pkgs.callPackage ./sources.nix {};
+  fetlock = callPackage sources.fetlock {};
   selection = fetlock.gomod.load ./lock.nix {};
 in selection
