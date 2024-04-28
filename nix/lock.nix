@@ -15,7 +15,7 @@ in
       depKeys = [
       ];
       src = (final.pathSrc .././.);
-      vendorHash = "sha256-LWNn5qp+Z/M9xTtOZ5RDHq1QEFK/Y2XgBi7H5S7Z7XE=";
+      vendorHash = "sha256-iJojbLeaUjr3KmMEOhawT7yZfjGpkXFX2Z3X/hpV9W0=";
     };
   };
 }

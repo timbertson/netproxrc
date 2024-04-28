@@ -1,12 +1,16 @@
 package main
-import "testing"
-import "github.com/stretchr/testify/require"
-import "os/exec"
-import "os"
-import "io"
-import "fmt"
-import "sync"
-import "strings"
+
+import (
+	"fmt"
+	"io"
+	"os"
+	"os/exec"
+	"strings"
+	"sync"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
 
 const realNetrc = "~/.netrc"
 const testNetrc = "./test/netrc"
@@ -19,15 +23,16 @@ const zeroHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 
 type CommandOutput struct {
 	success bool
-	stdout string
-	stderr string
+	stdout  string
+	stderr  string
 }
 
 func spawnReadRoutine(t *testing.T, wg *sync.WaitGroup, linePrefix string, success *bool, dest *string, pipe io.Reader) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		buf, err := io.ReadAll(pipe); if err != nil {
+		buf, err := io.ReadAll(pipe)
+		if err != nil {
 			t.Logf("read failed: %v", err)
 			*success = false
 		} else {
@@ -44,16 +49,18 @@ func logLines(t *testing.T, prefix string, output string) {
 }
 
 func commandOutput(t *testing.T, config Config) CommandOutput {
-	output := CommandOutput{ success: true }
+	output := CommandOutput{success: true}
 	t.Logf("exec: %+v", config)
 
 	_, err := WithProc(config, func(proc *exec.Cmd) (bool, error) {
 		proc.Stderr = nil
 		proc.Stdout = nil
-		stdoutPipe, err := proc.StdoutPipe(); if err != nil {
+		stdoutPipe, err := proc.StdoutPipe()
+		if err != nil {
 			t.Fatalf("pipe failed: %v", err)
 		}
-		stderrPipe, err := proc.StderrPipe(); if err != nil {
+		stderrPipe, err := proc.StderrPipe()
+		if err != nil {
 			t.Fatalf("pipe failed: %v", err)
 		}
 
@@ -61,7 +68,8 @@ func commandOutput(t *testing.T, config Config) CommandOutput {
 		nixPath := os.Getenv("NIX_PATH")
 		proc.Env = append(proc.Env, fmt.Sprintf("NIX_PATH=nixpkgs-overlays=nix/overlay.nix:%s", nixPath))
 
-		err = proc.Start(); if err != nil {
+		err = proc.Start()
+		if err != nil {
 			t.Fatalf("start failed: %v", err)
 		}
 		wg := sync.WaitGroup{}
@@ -86,12 +94,12 @@ func commandOutput(t *testing.T, config Config) CommandOutput {
 }
 
 func makeConfig(t *testing.T, netrcPath string, cmd ...string) Config {
-	return Config {
-		verbose: true,
-		port: 0,
-		listenIface: "localhost",
-		netrcPath: netrcPath,
-		cmd: cmd,
+	return Config{
+		verbose:        true,
+		port:           0,
+		listenIface:    "localhost",
+		netrcPath:      netrcPath,
+		cmd:            cmd,
 		suppressPrintf: true,
 		info: func(msg string, args ...interface{}) {
 			t.Logf(msg, args...)
@@ -153,7 +161,7 @@ func TestNixFetchGit(t *testing.T) {
 func TestNixFetchGoModule(t *testing.T) {
 	config := makeConfig(t, realNetrc)
 	expectHashMismatch(t, config, fmt.Sprintf(`pkgs.buildGoModule {
-		src = ./test/gomod;
+		src = ./test/_gomod;
 		pname = "test";
 		version = "test";
 		vendorHash = "%s";

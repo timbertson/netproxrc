@@ -19,12 +19,12 @@ import (
 )
 
 type Config struct {
-	port int
-	verbose bool
-	listenIface string
-	netrcPath string
-	cmd []string
-	info func(msg string, argv ...interface{})
+	port           int
+	verbose        bool
+	listenIface    string
+	netrcPath      string
+	cmd            []string
+	info           func(msg string, argv ...interface{})
 	suppressPrintf bool
 }
 
@@ -50,6 +50,18 @@ func (log ProxyLog) Printf(format string, v ...interface{}) {
 	log.config.info(format, v...)
 }
 
+func ExpandUserPath(p string) (string, error) {
+	if strings.HasPrefix(p, "~/") {
+		usr, err := user.Current()
+		if err != nil {
+			return p, err
+		}
+		dir := usr.HomeDir
+		p = filepath.Join(dir, p[2:])
+	}
+	return p, nil
+}
+
 func WithProc(config Config, block func(*exec.Cmd) (bool, error)) (bool, error) {
 	verbose := config.verbose
 	listenIface := config.listenIface
@@ -57,13 +69,9 @@ func WithProc(config Config, block func(*exec.Cmd) (bool, error)) (bool, error) 
 	cmd := config.cmd
 	info := config.info
 
-	if strings.HasPrefix(netrcPath, "~/") {
-		usr, err := user.Current()
-		if err != nil {
-			log.Panic(err)
-		}
-		dir := usr.HomeDir
-		netrcPath = filepath.Join(dir, netrcPath[2:])
+	netrcPath, err := ExpandUserPath(netrcPath)
+	if err != nil {
+		log.Panic(err)
 	}
 
 	info("Loading %s", netrcPath)
